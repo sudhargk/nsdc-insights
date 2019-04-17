@@ -3,19 +3,19 @@ columns <- c("NewID","Account.ID","Type.of.partner","batchID","CentreID","Course
 dataUI <- tabPanel("Data",
                    sidebarLayout(
                      sidebarPanel(
-                       fileInput("file", "Choose XL File",
+                       fileInput("dataInputFile", "Choose XL File",
                                  accept = c("text/xlsx",".xlsx")),
-                       radioButtons("disp", "Display",
+                       radioButtons("dataDisplayOption", "Display",
                                     choices = c(Head = "head",
                                                 All = "all"),
                                     selected = "head"),
-                       selectInput(inputId = "columns",
+                       selectInput(inputId = "dataColumns",
                                    label = "Choose a Column:",
                                    choices = columns)
                      ),
                      mainPanel(
                        tabsetPanel(
-                         tabPanel("Dataset", tableOutput("Data")),
-                         tabPanel("Summary Stats", verbatimTextOutput("summary"))))
+                         tabPanel("Dataset", tableOutput("dataTable")),
+                         tabPanel("Summary Stats", verbatimTextOutput("dataSummary"))))
                    )
 )
