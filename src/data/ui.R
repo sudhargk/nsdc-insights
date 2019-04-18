@@ -5,12 +5,9 @@ dataUI <- tabPanel("Data",
                      sidebarPanel(
                        fileInput("dataInputFile", "Choose XL File",
                                  accept = c("text/xlsx",".xlsx")),
-                       radioButtons("dataDisplayOption", "Display",
-                                    choices = c(Head = "head",
-                                                All = "all"),
-                                    selected = "head"),
-                       selectInput(inputId = "dataColumns",
+                       selectizeInput(inputId = "dataColumns",
                                    label = "Choose a Column:",
+                                   multiple = TRUE,
                                    choices = columns)
                      ),
                      mainPanel(
