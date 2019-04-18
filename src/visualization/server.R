@@ -32,14 +32,15 @@ visualServer <- function(input, output,session,read_data){
   
   centersSelected <- reactive({
       read_data() %>%filter(CentreState %in% input$visualCenterStateSelect) %>% 
-      select(CentreType,centre.Status,CentreID,FundingPartner,MonthlyCurrentCTCOrearning)%>%
-      group_by(CentreType,centre.Status,CentreID,FundingPartner)%>%
-      summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning))
+      select(CentreType,centre.Status,CentreID,MonthlyCurrentCTCOrearning,PlacementStatus,DateOfBirth) %>%
+      mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years")) %>%
+      group_by(CentreType,centre.Status,CentreID)%>%
+      summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageAge=mean(Age),Placement=(sum(PlacementStatus==2)/sum(!is.na(CentreID))))
   });
   
   candidateSelected <- reactive({
       read_data() %>% filter(CandidateState %in% input$visualCandidateStateSelect) %>% 
-      select(NewID,Grade,DateOfBirth,EducationLevel,`Employment.Type`,PlacementStatus,MonthlyEarningOrCTCbeforeTraining,
+      select(NewID,Grade,DateOfBirth,EducationLevel,`Employment.Type`,PlacementStatus,FundingPartner,VM1,VM2,TechnicalEducation,MonthlyEarningOrCTCbeforeTraining,
              MonthlyCurrentCTCOrearning,PreTrainingStatus)%>%
       mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years"))
      
@@ -47,11 +48,21 @@ visualServer <- function(input, output,session,read_data){
   
   coursesSelected <- reactive({
     read_data() %>% filter(Skilling.Category %in% input$visualCourseSkillSelect) %>% 
-      select(Course.MAster.ID,`Course Fee`,PreTrainingStatus,TechnicalEducation,MonthlyCurrentCTCOrearning,BatchEndDate,BatchStartDate)%>%
+      select(Course.MAster.ID,`Course Fee`,DateOfBirth,PlacementStatus,MonthlyCurrentCTCOrearning,BatchEndDate,BatchStartDate)%>%
+      mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years")) %>%
       mutate(Duration=time_length(difftime(mdy(substring(BatchEndDate,0,11)),mdy(substring(BatchStartDate,0,11))),"days"))%>%
-      group_by(Course.MAster.ID,PreTrainingStatus,TechnicalEducation)%>%
-      summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageFee=mean(`Course Fee`),AverageDuration=mean(Duration))
+      group_by(Course.MAster.ID)%>%
+      summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageFee=mean(`Course Fee`),
+                AverageDuration=mean(Duration),AverageAge=mean(Age),
+                Placement=(sum(PlacementStatus==2)/sum(!is.na(Course.MAster.ID))))
   });
+  
+  # coursesSelected <- reactive({
+  #   read_data() %>% filter(Skilling.Category %in% input$visualCourseSkillSelect) %>% 
+  #     mutate(Duration=time_length(difftime(mdy(substring(BatchEndDate,0,11)),mdy(substring(BatchStartDate,0,11))),"days"))%>%
+  #     group_by(Course.MAster.ID,PreTrainingStatus,TechnicalEducation)%>%
+  #     summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageFee=mean(`Course Fee`),AverageDuration=mean(Duration))
+  # });
   
   ### ---------------------                 Dashboarding          
   #################################################################################
@@ -103,18 +114,11 @@ visualServer <- function(input, output,session,read_data){
   ### ---------------------                 Center          
   #################################################################################
   
-  
-  
   output$visualizeCenterStateInputSelect <- renderUI({
     pickerInput("visualCenterStateSelect", "STATES ",
                 choices = uniqueCentreStates(),
                 options = list(`actions-box` = TRUE), multiple = TRUE
     )
-  });
-  
-  output$visualCenterFundingPartners <- renderRbokeh({
-    figure(xlab = "Funding Partner", ylab = "# of Centers",legend_location=NULL, tools=NULL) %>% 
-      ly_bar(x=as.factor(FundingPartner),data = centersSelected(),alpha = 0.5,hover=FALSE, width = 0.9)
   });
   
   output$visualCenterStatus <- renderRbokeh({
@@ -126,6 +130,33 @@ visualServer <- function(input, output,session,read_data){
     figure(xlab = "Center Type", ylab = "# of Centers",legend_location=NULL, tools=NULL) %>% 
       ly_bar(x=as.factor(CentreType),data = centersSelected(),alpha = 0.5,hover=FALSE,width = 0.9)
   });
+  
+  output$visualCenterAge <- renderRbokeh({
+    data <- centersSelected()%>%filter(!is.na(AverageAge))
+    figure(xlab = "Age", ylab = "# of Centers",legend_location=NULL, tools=NULL) %>%
+      ly_hist(AverageAge,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+  })
+  
+  output$visualCenterPlacement <- renderRbokeh({
+    data <- centersSelected()%>%filter(!is.na(Placement)) #%>% arrange(desc(Placement)) %>% head(7)
+    # ggplot(data, aes(x=as.factor(CentreID), y=Placement, label=Placement)) + 
+    # geom_point(stat='identity', fill="black", size=10)  + xlab("Centres") + ylab("Placements") +
+    # geom_segment(aes(y = 0,  x = as.factor(CentreID), yend = Placement, xend = as.factor(CentreID)), alpha=0.2,color="black") +
+    # geom_text(color="white", size=4)  + coord_flip()  + 
+    # theme(legend.position="none",axis.text.x=element_blank(),axis.ticks.x=element_blank(),axis.title.x=element_blank(),
+    #         panel.grid.major = element_blank(),panel.grid.minor = element_blank())
+    figure(xlab = "Placement Ratio", ylab = "# of Centers",legend_location=NULL, tools=NULL) %>%
+    ly_hist(Placement,data=data,alpha = 0.5, breaks = 20,freq = TRUE)
+      #%>% ly_density(Placement,data=data) 
+  })
+  
+ 
+  output$visualCenterPackage <- renderRbokeh({
+    data <- centersSelected()%>%filter(!is.na(AvereageCTC))
+    figure(xlab = "Package", ylab = "# of Centers",legend_location=NULL, tools=NULL) %>%
+      ly_hist(AvereageCTC,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+      #%>% ly_density(AvereageCTC,data=data) 
+  })
   
   output$visualChosenCentreStates <- renderValueBox({
     valueBox(
@@ -158,42 +189,68 @@ visualServer <- function(input, output,session,read_data){
   
   output$visualChosenCandidateStates <- renderValueBox({
     valueBox(
-      "Candidates in States",
+      "Students in States",
       color="aqua",
       value = nrow(candidateSelected()),
       icon = icon("user","fa-user-alt")
     )
   })
+  
   output$visualCandidateGrade <- renderRbokeh({
     data <- candidateSelected()%>%group_by(Grade,PlacementStatus)%>%filter(!is.na(Grade)&!is.na(PlacementStatus))%>%count()
-    figure(xlab = "Grades", ylab = "# of Candidates",legend_location="bottom", tools=NULL) %>%
+    figure(xlab = "Grades", ylab = "# of Candidates", legend_location=NULL,tools=NULL) %>%
       ly_bar(x=as.factor(Grade),y=n,data=data,color=as.factor(PlacementStatus),alpha = 0.5,hover=FALSE, width = 0.9,position = "dodge")
   })
-  output$visualCanddidateEducationLevel <- renderRbokeh({
+  
+  output$visualCandidateFundingPartner <- renderRbokeh({
+    data <- candidateSelected()%>%group_by(FundingPartner,PlacementStatus)%>%filter(!is.na(FundingPartner)&!is.na(PlacementStatus))%>%count()
+    figure(xlab = "Funding Partner", ylab = "# of Candidates",legend_location=NULL, tools=NULL) %>%
+      ly_bar(x=as.factor(FundingPartner),y=n,data=data,color=as.factor(PlacementStatus),alpha = 0.5,hover=FALSE, width = 0.9,position = "dodge")
+  })
+  
+  output$visualCandidateVM1 <- renderRbokeh({
+    data <- candidateSelected()%>%group_by(VM1,PlacementStatus)%>%filter(!is.na(VM1)&!is.na(PlacementStatus))%>%count()
+    figure(xlab = "VM1", ylab = "# of Candidates", legend_location=NULL,tools=NULL) %>%
+      ly_bar(x=as.factor(VM1),y=n,data=data,color=as.factor(PlacementStatus),alpha = 0.5,hover=FALSE, width = 0.9,position = "dodge")
+  })
+  
+  output$visualCandidateVM2 <- renderRbokeh({
+    data <- candidateSelected()%>%group_by(VM2,PlacementStatus)%>%filter(!is.na(VM2)&!is.na(PlacementStatus))%>%count()
+    figure(xlab = "VM2", ylab = "# of Candidates", legend_location=NULL,tools=NULL) %>%
+      ly_bar(x=as.factor(VM2),y=n,data=data,color=as.factor(PlacementStatus),alpha = 0.5,hover=FALSE, width = 0.9,position = "dodge")
+  })
+  
+  output$visualCandidateTechEdu <- renderRbokeh({
+    data <- candidateSelected()%>%group_by(TechnicalEducation,PlacementStatus)%>%filter(!is.na(TechnicalEducation)&!is.na(PlacementStatus))%>%count()
+    figure(xlab = "Technical Education ", ylab = "# of Candidates", legend_location=NULL, tools=NULL) %>%
+      ly_bar(x=as.factor(TechnicalEducation),y=n,data=data,color=as.factor(PlacementStatus),alpha = 0.5,hover=FALSE, width = 0.9,position = "dodge")
+  })
+  
+  output$visualCandidateEducationLevel <- renderRbokeh({
     data <- candidateSelected()%>%group_by(EducationLevel,PlacementStatus)%>%filter(!is.na(EducationLevel)&!is.na(PlacementStatus))%>%count()
-    figure(xlab = "Education Level", ylab = "# of Candidates",legend_location="bottom", tools=NULL) %>% 
+    figure(xlab = "Education Level", ylab = "# of Candidates", legend_location=NULL,tools=NULL) %>% 
       ly_bar(x=as.factor(EducationLevel),y=n,data=data,color=as.factor(PlacementStatus),alpha = 0.5,hover=FALSE, width = 0.9,position = "dodge")
   })
   
  
-  output$visualCanddidateEmployment <- renderRbokeh({
+  output$visualCandidateEmployment <- renderRbokeh({
     data <- candidateSelected()%>%group_by(`Employment.Type`,PlacementStatus)%>%filter(!is.na(`Employment.Type`)&!is.na(PlacementStatus))%>%count()
     figure(xlab = "Employment Type", ylab = "# of Candidates",legend_location=NULL, tools=NULL) %>%
       ly_bar(x=as.factor(`Employment.Type`),y=n,data = data,color=as.factor(PlacementStatus),alpha = 0.5,hover=FALSE, width = 0.9,position = "dodge")
   })
   
-  output$visualCanddidateCTC <- renderRbokeh({
-    data <- candidateSelected()%>%filter(!is.na(MonthlyEarningOrCTCbeforeTraining))
-    figure(xlab = "CTC", ylab = "# of Candidates",legend_location=NULL, tools=NULL) %>%
-      ly_hist(MonthlyEarningOrCTCbeforeTraining,data = data,alpha = 0.5, breaks = 20,freq = FALSE)  %>%
-      ly_density(MonthlyEarningOrCTCbeforeTraining,data=data) 
-  })
+  # output$visualCanddidateCTC <- renderRbokeh({
+  #   data <- candidateSelected()%>%filter(!is.na(MonthlyEarningOrCTCbeforeTraining))
+  #   figure(xlab = "CTC", ylab = "# of Candidates",legend_location=NULL, tools=NULL) %>%
+  #     ly_hist(MonthlyEarningOrCTCbeforeTraining,data = data,alpha = 0.5, breaks = 20,freq = TRUE)  %>%
+  #     ly_density(MonthlyEarningOrCTCbeforeTraining,data=data) 
+  # })
 
   output$visualCandidateAge <- renderRbokeh({
     data <- candidateSelected()%>%filter(!is.na(Age))
     figure(xlab = "Age", ylab = "# of Candidates",legend_location=NULL, tools=NULL) %>%
-      ly_hist(Age,data=data,alpha = 0.5, breaks = 20,freq = FALSE)  %>%
-      ly_density(Age,data=data) 
+      ly_hist(Age,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+      #%>% ly_density(Age,data=data) 
   })
   
   output$visualTop3Packages <- renderTable({
@@ -217,19 +274,40 @@ visualServer <- function(input, output,session,read_data){
   output$visualCoursesDuration <- renderRbokeh({
     data <- coursesSelected()%>%filter(!is.na(AverageDuration))
     figure(xlab = "Course Duration", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
-      ly_hist(AverageDuration,data=data,alpha = 0.5, breaks = 20,freq = FALSE)  %>%
-      ly_density(AverageDuration,data=data) 
+      ly_hist(AverageDuration,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+      #%>% ly_density(AverageDuration,data=data) 
   });
   
-  output$visualCoursePreTraining <- renderRbokeh({
-    figure(xlab = "Pre Training Status", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
-      ly_bar(x=as.factor(PreTrainingStatus),data = coursesSelected(),alpha = 0.5,hover=FALSE,width = 0.9)
+  output$visualCoursesFee <- renderRbokeh({
+    data <- coursesSelected()%>%filter(!is.na(AverageFee))
+    figure(xlab = "Course Fee", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
+      ly_hist(AverageFee,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+    #%>% ly_density(AverageDuration,data=data) 
   });
   
-  output$visualCourseTechEdu <- renderRbokeh({
-    figure(xlab = "Tech Edu", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
-      ly_bar(x=as.factor(TechnicalEducation),data = coursesSelected(),alpha = 0.5,hover=FALSE,width = 0.9)
-  });
+  
+  output$visualCourseAge <- renderRbokeh({
+    data <- coursesSelected()%>%filter(!is.na(AverageAge))
+    figure(xlab = "Age", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>%
+      ly_hist(AverageAge,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+  })
+  
+  output$visualCoursePlacement <- renderRbokeh({
+    data <- coursesSelected()%>%filter(!is.na(Placement)) #%>% arrange(desc(Placement)) %>% head(7)
+    figure(xlab = "Placement Ratio", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>%
+      ly_hist(Placement,data=data,alpha = 0.5, breaks = 20,freq = TRUE)
+    #%>% ly_density(Placement,data=data) 
+  })
+  
+  
+  output$visualCoursePackage <- renderRbokeh({
+    data <- coursesSelected()%>%filter(!is.na(AvereageCTC))
+    figure(xlab = "Package", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>%
+      ly_hist(AvereageCTC,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+    #%>% ly_density(AvereageCTC,data=data) 
+  })
+  
+  
   
   output$visualChosenCentreCourseSkills <- renderValueBox({
     valueBox(
