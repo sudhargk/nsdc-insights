@@ -9,6 +9,11 @@ visualServer <- function(input, output,session,read_data){
     unique(read_data()["CandidateState"])
   });
   
+  uniqueCourseSkills <- reactive({
+    unique(read_data()["Skilling.Category"])
+  });
+  
+  
   uniqueCenters <- reactive({
     nrow(unique(read_data()["CentreID"]))
   });
@@ -34,9 +39,18 @@ visualServer <- function(input, output,session,read_data){
   
   candidateSelected <- reactive({
       read_data() %>% filter(CandidateState %in% input$visualCandidateStateSelect) %>% 
-      select(NewID,Grade,DateOfBirth,EducationLevel,`Employment.Type`,PlacementStatus,MonthlyEarningOrCTCbeforeTraining,PreTrainingStatus)%>%
+      select(NewID,Grade,DateOfBirth,EducationLevel,`Employment.Type`,PlacementStatus,MonthlyEarningOrCTCbeforeTraining,
+             MonthlyCurrentCTCOrearning,PreTrainingStatus)%>%
       mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years"))
      
+  });
+  
+  coursesSelected <- reactive({
+    read_data() %>% filter(Skilling.Category %in% input$visualCourseSkillSelect) %>% 
+      select(Course.MAster.ID,`Course Fee`,PreTrainingStatus,TechnicalEducation,MonthlyCurrentCTCOrearning,BatchEndDate,BatchStartDate)%>%
+      mutate(Duration=time_length(difftime(mdy(substring(BatchEndDate,0,11)),mdy(substring(BatchStartDate,0,11))),"days"))%>%
+      group_by(Course.MAster.ID,PreTrainingStatus,TechnicalEducation)%>%
+      summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageFee=mean(`Course Fee`),AverageDuration=mean(Duration))
   });
   
   ### ---------------------                 Dashboarding          
@@ -124,18 +138,12 @@ visualServer <- function(input, output,session,read_data){
   
   output$visualTop3Centres <- renderTable({
     centersSelected() %>% arrange(desc(AvereageCTC)) %>% 
-      head(3) %>% ungroup() %>% select(CentreID,AvereageCTC) %>%
-      mutate(CentreID=as.factor(CentreID),AvereageCTC=round(AvereageCTC,2))
+      head(3) %>% ungroup() %>% select(CentreID,CTC=AvereageCTC) %>%
+      mutate(CentreID=as.factor(CentreID),CTC=round(CTC,2))
     },spacing =c("xs"),align = 'c'
   )
   
-  observeEvent(input$visualChosenCentreStates, {
-    shinyWidgets:::updateVerticalTabsetPanel(
-      session=session,
-      inputId = "CentresPanel",
-      selected = input$visualChosenCentreStates
-    )
-  }, ignoreInit = TRUE)
+ 
   
   ### ---------------------                 Candidate        
   #################################################################################
@@ -188,4 +196,54 @@ visualServer <- function(input, output,session,read_data){
       ly_density(Age,data=data) 
   })
   
+  output$visualTop3Packages <- renderTable({
+    candidateSelected() %>% arrange(desc(MonthlyCurrentCTCOrearning)) %>% 
+      head(3) %>% ungroup() %>% select(NewID,CTC=MonthlyCurrentCTCOrearning) %>%
+      mutate(NewID=as.factor(NewID),CTC=round(CTC,2))
+  },spacing =c("xs"),align = 'c'
+  )
+  
+  ### ---------------------                 Courses        
+  #################################################################################
+  
+  
+  output$visualizeCoursesSkillInputSelect <- renderUI({
+    pickerInput("visualCourseSkillSelect", "SKILLS ",
+                choices = uniqueCourseSkills(),
+                options = list(`actions-box` = TRUE), multiple = TRUE
+    )
+  });
+  
+  output$visualCoursesDuration <- renderRbokeh({
+    data <- coursesSelected()%>%filter(!is.na(AverageDuration))
+    figure(xlab = "Course Duration", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
+      ly_hist(AverageDuration,data=data,alpha = 0.5, breaks = 20,freq = FALSE)  %>%
+      ly_density(AverageDuration,data=data) 
+  });
+  
+  output$visualCoursePreTraining <- renderRbokeh({
+    figure(xlab = "Pre Training Status", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
+      ly_bar(x=as.factor(PreTrainingStatus),data = coursesSelected(),alpha = 0.5,hover=FALSE,width = 0.9)
+  });
+  
+  output$visualCourseTechEdu <- renderRbokeh({
+    figure(xlab = "Tech Edu", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
+      ly_bar(x=as.factor(TechnicalEducation),data = coursesSelected(),alpha = 0.5,hover=FALSE,width = 0.9)
+  });
+  
+  output$visualChosenCentreCourseSkills <- renderValueBox({
+    valueBox(
+      "Courses in Skills",
+      color="yellow",
+      icon = icon("course","fa-book"),
+      value = nrow(coursesSelected())
+    )
+  });
+  
+  output$visualTop3Courses <- renderTable({
+    coursesSelected() %>% arrange(desc(AvereageCTC)) %>% 
+      head(3) %>% ungroup() %>% select(CourseID=Course.MAster.ID,CTC=AvereageCTC) %>%
+      mutate(CourseID=as.factor(CourseID),CTC=round(CTC,2))
+  },spacing =c("xs"),align = 'c'
+  )
 }

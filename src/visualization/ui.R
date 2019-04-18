@@ -68,7 +68,26 @@ visualUI  <- tabPanel("Visualization",
                      )
             ),
             tabPanel("Courses ",
-                             "This panel is intentionally left blank")
+                     sidebarLayout(
+                       sidebarPanel(
+                         fluidRow(
+                           uiOutput("visualizeCoursesSkillInputSelect"),
+                           valueBoxOutput(width=12,"visualChosenCentreCourseSkills"),
+                           box(title="Top 3 Courses", width=12,height=180, status = "primary", 
+                               background = "black", solidHeader = TRUE,
+                               tableOutput("visualTop3Courses"))
+                         )
+                       ),
+                       mainPanel(
+                         tabsetPanel(
+                           tabPanel("Course Duration", rbokehOutput("visualCoursesDuration")),
+                           tabPanel("Pre-Training",rbokehOutput("visualCoursePreTraining")),
+                           tabPanel("Tech Edu ",rbokehOutput("visualCourseTechEdu"))
+                         )
+                       ),
+                       position=c("right")
+                     )
+            )
           )
       )
     )
