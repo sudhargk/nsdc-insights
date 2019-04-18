@@ -14,28 +14,61 @@ visualUI  <- tabPanel("Visualization",
     ),
     fluidRow(
       box(status = "primary", background = "black", width = 12,
-          tabsetPanel(
+          tags$style(HTML("
+                   .well  {border-color:grey;}
+                   .nav-pills > li > a {background-color:black; color:white;}
+                   .nav-pills > li[class=active] > a {background-color:grey; color:white;}
+                   .shiny-html-output {font-size:7;}
+                "
+          )),        
+          navlistPanel(widths = c(2,10),
+            tabPanel("Candidates", 
+                     sidebarLayout(
+                       sidebarPanel(
+                         fluidRow(
+                           uiOutput("visualizeCandidateStateInputSelect"),
+                           valueBoxOutput(width=12,"visualChosenCandidateStates"),
+                           box(title="Top 3 Packages", width=12,height=180, status = "primary",
+                               background = "black", solidHeader = TRUE,
+                               tableOutput("visualTop3Packages"))
+                         )
+                       ),
+                       mainPanel(
+                         tabsetPanel(
+                                   tabPanel("Grade",  rbokehOutput("visualCandidateGrade")),
+                                   tabPanel("Age", rbokehOutput("visualCandidateAge")),
+                                   tabPanel("Edu Level", rbokehOutput("visualCanddidateEducationLevel")),
+                                   tabPanel("Emp Type", box_height =80,rbokehOutput("visualCanddidateEmployment")),
+                                   tabPanel("Current CTC", box_height =80,rbokehOutput("visualCanddidateCTC"))
+                              )
+                       ),
+                       position=c("right")
+                     )
+                    ),
             tabPanel("Centres",
                      sidebarLayout(
-                         sidebarPanel(
-                           fluidRow(
-                                uiOutput("visualizeCenterStateInputSelect"),
-                                valueBoxOutput(width=12,"visualChosenCentres")
-                           )
-                         ),
-                         mainPanel(
-                           verticalTabsetPanel(menuSide = "right",contentWidth = 10,color = "black",
-                             verticalTabPanel("Funding Partners", box_height =100, rbokehOutput("visualCenterFundingPartners")),
-                             verticalTabPanel("Status", box_height =100,rbokehOutput("visualCenterStatus")),
-                             verticalTabPanel("Type ", box_height =100,rbokehOutput("visualCenterType"))
-                             
-                           )
-                         ),
-                         position=c("right")
-                        )
-                     ),
-            tabPanel("Candidates", "This panel is intentionally left blank"),
-            tabPanel("Courses ", "This panel is intentionally left blank")
+                       sidebarPanel(
+                         fluidRow(
+                           uiOutput("visualizeCenterStateInputSelect"),
+                           valueBoxOutput(width=12,"visualChosenCentreStates"),
+                           box(title="Top 3 Centres", width=12,height=180, status = "primary", 
+                               background = "black", solidHeader = TRUE,
+                               tableOutput("visualTop3Centres"))
+                         )
+                       ),
+                       mainPanel(
+                         tabsetPanel(
+                                    tabPanel("Funding Partners", rbokehOutput("visualCenterFundingPartners")),
+                                    tabPanel("Status",rbokehOutput("visualCenterStatus")),
+                                    tabPanel("Type ",rbokehOutput("visualCenterType"))
+                                             
+                         )
+                       ),
+                       position=c("right")
+                     )
+            ),
+            tabPanel("Courses ",
+                             "This panel is intentionally left blank")
           )
       )
     )

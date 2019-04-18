@@ -6,10 +6,10 @@ source("src/modelling/server.R")
 source("src/testing/server.R")
 source("src/conclusion/server.R")
 
-server <- function(input, output){
+server <- function(input, output,session){
   read_data <- reactive({
     read_xlsx('data/raw/NSDC_UChicago_Group1.xlsx')
   })
   dataServer(input,output)
-  visualServer(input,output,read_data)
+  visualServer(input,output,session,read_data)
 }

@@ -7,6 +7,7 @@ library(readxl)
 library(dplyr)
 library(ggplot2)
 library(rbokeh)
+library(lubridate)
 
 source('src/ui.R')
 source('src/server.R')
