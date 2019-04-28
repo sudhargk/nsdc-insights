@@ -94,7 +94,7 @@ preprocessServer <- function(input, output,session){
   })
   
   data_after_mv<-reactive({
-    apply_mv_rule()%>%select(input$preprocessColumns)
+    apply_mv_rule()%>%select(input$preprocessColumns)%>%mutate_if(sapply(input$preprocessColumns,isCategorical),as.factor)
   })
   
   
@@ -154,12 +154,17 @@ preprocessServer <- function(input, output,session){
   
   observeEvent(input$preprocesView, {
     output$preprocessNumMissingValues<-renderText({ paste("# Missing Values : ", toString(missing_value_rows()))})
-     output$preprocessDistribution<-renderRbokeh({
-      figure(xlab = input$preprocessColumns , ylab = "Frequency",legend_location=NULL, tools=NULL) %>%
-        ly_hist(input$preprocessColumns,data=data_after_mv(),alpha = 0.5, breaks = 20,freq = TRUE)
-    })
-
     output$preprocessNumRows<-renderText({ paste("# Total Rows",toString(data_after_mv()%>%count()))})
+     output$preprocessDistribution<-renderRbokeh({
+       myPlot <- figure(xlab = input$preprocessColumns , ylab = "Frequency",legend_location=NULL, tools=NULL);
+       if(!isCategorical(input$preprocessColumns)){
+          myPlot%>%ly_hist(input$preprocessColumns,data=data_after_mv(),alpha = 0.5, breaks = 20,freq = TRUE)
+       }else{
+          gData<-table(data_after_mv())
+          myPlot%>%ly_bar(x=names(gData),y=gData,alpha = 0.5)
+       }
+    })
+    
   })
 
 }

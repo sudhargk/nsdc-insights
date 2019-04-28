@@ -36,40 +36,17 @@ getColumnType <- function(column){
          "centre.Status" = "Categorical"
   )
 }
+  isCategorical<-function(colname){
+    getColumnType(colname)=="Categorical"
+  }
   
   toType <- function(column,value){
-    switch(column,
-           "NewID" = as.integer(value),
-           "Account.ID" = as.integer(value),
-           "Type.of.partner" = as.integer(value),
-           "batchID" = as.integer(value),
-           "CentreID" = as.integer(value),
-           "Course.MAster.ID" = as.integer(value),
-           "Course Fee" = as.double(value),
-           "VM1" = as.integer(value),
-           "Gender" = as.integer(value),
-           "VM2" = as.integer(value),
-           "DateOfBirth" = as.Date(value),
-           "PreTrainingStatus" = as.integer(value),
-           "EducationLevel" = as.integer(value),
-           "TechnicalEducation" = as.integer(value),
-           "CandidateState" = as.integer(value),
-           "CandidateDistrict" = as.integer(value),
-           "Sector" = as.integer(value),
-           "BatchStartDate" = as.Date(value),
-           "BatchEndDate" = as.Date(value),
-           "FundingPartner" = as.integer(value),
-           "Grade" = value,
-           "PlacementStatus" = as.integer(value),
-           "Certified" = as.integer(value),
-           "Employment.Type" = as.integer(value),
-           "StateOFPlacementorWork" = as.integer(value),
-           "Skilling.Category" = as.integer(value),
-           "MonthlyEarningOrCTCbeforeTraining" = as.double(value),
-           "MonthlyCurrentCTCOrearning" = as.double(value),
-           "CentreState" = as.integer(value),
-           "CentreDistrict" = as.integer(value),
-           "CentreType" = as.integer(value),
-           "centre.Status" = as.integer(value)
+    if(column=="Grade"){
+      return(value)
+    }
+    switch(getColumnType(column),
+           "Categorical" = as.integer(value),
+           "Numerical" = as.double(value),
+           "Date" =as.Date(value)
     )
 }
