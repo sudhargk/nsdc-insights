@@ -25,7 +25,7 @@ modelUI  <- tabPanel("Model",
              uiOutput("modelResults")
              ),
     tabPanel("Plots", 
-             uiOutput("modelPlots")
+             plotOutput("modelPlots")
              ),
     tabPanel("Accuracy", 
              uiOutput("modelAccuracy")

@@ -20,7 +20,12 @@ modelServer <- function(input, output,session){
     x <- cbind(train_x(),train_y())
     fit <- rpart(train_y() ~ ., data = x,method="class")
     output$modelResults <- renderUI({
-      text(summary(fit))
+      textOutput({
+        summary(fit)
+      })
+    })
+    output$modelPlots <- renderPlot({
+        fancyRpartPlot(fit, main = x) 
     })
   })
   

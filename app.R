@@ -15,6 +15,7 @@ library(tidyr)
 
 ##modeling
 library(rpart)
+library(rattle)
 
 source('src/ui.R')
 source('src/server.R')
