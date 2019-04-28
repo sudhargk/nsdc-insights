@@ -14,5 +14,5 @@ server <- function(input, output,session){
   dataServer(input,output)
   preprocessServer(input,output,session)
   visualServer(input,output)
-  
+  modelServer(input,output,session)
 }
