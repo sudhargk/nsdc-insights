@@ -4,6 +4,7 @@ source("src/visualization/ui.R")
 source("src/modelling/ui.R")
 source("src/testing/ui.R")
 source("src/conclusion/ui.R")
+source("src/pre-processing/ui.R")
 
 
 
@@ -16,6 +17,7 @@ ui <- navbarPage(
   windowTitle="National Skills Development Corporation",
   overviewUI,
   dataUI,
+  preprocessUI,
   visualUI,
   modelUI,
   testUI,
