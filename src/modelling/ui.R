@@ -16,7 +16,7 @@ modelUI  <- tabPanel("Model",
                 choices = c("Simple Decision Tree","Random Forest","Ada Boosting","GBM","XGBoost")
                 ),
     uiOutput("modelParameters"),
-    actionBttn(inputId = "modelTrain", label = "Train",  style = "bordered", 
+    actionBttn("modelTrain", label = "Train",  style = "bordered", 
               color = "warning",icon = icon("sliders"))
   )
 ), mainPanel(

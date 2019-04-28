@@ -12,6 +12,10 @@ library(lubridate)
 library(hash)
 library(tidyr)
 
+
+##modeling
+library(rpart)
+
 source('src/ui.R')
 source('src/server.R')
 
