@@ -1,6 +1,6 @@
 
 
-preprocessUI  <- tabPanel("Preprocessing", #sidebarPanel(
+preprocessUI  <- tabPanel("Data Preparation", #sidebarPanel(
   tags$style(HTML("
         .box  {background-color : transparent; }
         .center-div {float:center;}

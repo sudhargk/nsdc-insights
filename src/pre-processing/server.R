@@ -122,7 +122,7 @@ preprocessServer <- function(input, output,session){
   observeEvent(input$preprocessFile,{
       initialize_map(cols_with_missing_val())
       updatePickerInput(session,"preprocessIrrelevantCols",choices=names(input_data()));
-      
+      updateSelectInput(session,"preprocessColumns",choices=cols_with_missing_val())
   })
   
   observeEvent(input$preprocessIrrelevantCols,{

@@ -88,20 +88,22 @@ visualServer <- function(input, output){
   });
   
   output$visualPlacementPercentage <- renderGauge({
-    gauge(round(placedStudents()/totalEnrolledStudents(),2), 
+    gauge(round(placedStudents()/totalEnrolledStudents(),3)*100, 
           min = 0, 
-          max = 1, 
-          sectors = gaugeSectors(success = c(0.5, 1), 
-                                 warning = c(0.3, 0.5),
-                                 danger = c(0, 0.3)))
+          max = 100, 
+          symbol = "%",
+          sectors = gaugeSectors(success = c(60, 100), 
+                                 warning = c(30, 60),
+                                 danger = c(0, 30)))
   });
   
   output$visualGenderRatio <- renderGauge({
-    gauge(round(placedMaleStudents()/placedStudents(),2), 
+    gauge(round(placedMaleStudents()/placedStudents(),2)*100, 
           min = 0, 
-          max = 1, 
-          sectors = gaugeSectors(success = c(0.5, 1), 
-                                 warning = c(0, 0.5))
+          max = 100, 
+          symbol = "%",
+          sectors = gaugeSectors(success = c(50, 100), 
+                                 warning = c(0, 50))
     )
   });
   

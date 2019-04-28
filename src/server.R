@@ -11,7 +11,6 @@ source("src/fields.R")
 
 server <- function(input, output,session){
   
-    
   dataServer(input,output)
   preprocessServer(input,output,session)
   visualServer(input,output)
