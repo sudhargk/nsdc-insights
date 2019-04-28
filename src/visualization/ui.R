@@ -3,7 +3,7 @@ visualUI  <- tabPanel("Visualization",
     useShinydashboard(),
     fluidRow(
       box(title="Placement Percentage", height=180, status = "primary", background = "black", solidHeader = TRUE, gaugeOutput("visualPlacementPercentage")),
-      box(title="Male vs Female Placement Ratio", height=180, status = "primary", background = "black", solidHeader = TRUE,  gaugeOutput("visualGenderRatio"))
+      box(title="Gender Placement Ratio", height=180, status = "primary", background = "black", solidHeader = TRUE,  gaugeOutput("visualGenderRatio"))
     ),
     fluidRow(
       box(status = "primary", background = "black", width = 12,height=125,

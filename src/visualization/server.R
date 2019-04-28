@@ -1,5 +1,5 @@
 
-visualServer <- function(input, output,session,read_data){
+visualServer <- function(input, output,read_data){
  
   uniqueCentreStates <- reactive({
     unique(read_data()["CentreState"])
@@ -57,12 +57,6 @@ visualServer <- function(input, output,session,read_data){
                 Placement=(sum(PlacementStatus==2)/sum(!is.na(Course.MAster.ID))))
   });
   
-  # coursesSelected <- reactive({
-  #   read_data() %>% filter(Skilling.Category %in% input$visualCourseSkillSelect) %>% 
-  #     mutate(Duration=time_length(difftime(mdy(substring(BatchEndDate,0,11)),mdy(substring(BatchStartDate,0,11))),"days"))%>%
-  #     group_by(Course.MAster.ID,PreTrainingStatus,TechnicalEducation)%>%
-  #     summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageFee=mean(`Course Fee`),AverageDuration=mean(Duration))
-  # });
   
   ### ---------------------                 Dashboarding          
   #################################################################################

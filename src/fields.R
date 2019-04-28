@@ -1,4 +1,4 @@
-irrelevant_cols <- c("NewID","Account.ID","batchID","CentreID","Course.MAster.ID","StateOFPlacementorWork","CentreState","CentreDistrict")
+irrelevant_cols <- c("NewID","Account.ID","batchID","CentreID","Course.MAster.ID","StateOFPlacementorWork","CentreState","CentreDistrict","BatchEndDate","BatchStartDate","DateOfBirth","MonthlyCurrentCTCOrearning")
 
 getColumnType <- function(column){
   switch(column,
@@ -33,7 +33,9 @@ getColumnType <- function(column){
          "CentreState" = "Categorical",
          "CentreDistrict" = "Categorical",
          "CentreType" = "Categorical",
-         "centre.Status" = "Categorical"
+         "centre.Status" = "Categorical",
+         "Age" ="Numerical",
+         "CourseDuration"="Numerical"
   )
 }
   isCategorical<-function(colname){

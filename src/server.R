@@ -11,12 +11,12 @@ source("src/fields.R")
 
 server <- function(input, output,session){
   
-  #read_data <- reactive({
-     read_xlsx('data/raw/NSDC_UChicago_Group1.xlsx')
-  # })
+  read_data <- reactive({
+     read.xlsx('data/raw/NSDC_UChicago_Group1.xlsx')
+   })
   
   dataServer(input,output)
   preprocessServer(input,output,session)
-  #visualServer(input,output,session)
+  visualServer(input,output,read_data)
   
 }

@@ -37,15 +37,15 @@ initialize_map <- function(columns){
 }
 
 getSelectedMethod<- function(column){
-  c(MV_MAP[[paste(column,"METHOD",sep=".")]]);
+  MV_MAP[[paste(column,"METHOD",sep=".")]];
 }
 
 getSelectedStrategy<- function(column){
- c(MV_MAP[[paste(column,"STRATEGY",sep=".")]]);
+ MV_MAP[[paste(column,"STRATEGY",sep=".")]];
 }
 
 getSelectedConstant<- function(column){
-  c(MV_MAP[[paste(column,"CONSTANT",sep=".")]])
+  MV_MAP[[paste(column,"CONSTANT",sep=".")]]
 }
 
 replace_na_in_col<- function(data,colname,value){
@@ -54,47 +54,62 @@ replace_na_in_col<- function(data,colname,value){
   data%>%replace_na(col_val)
 }
 
+
+apply_mv_strategy<- function(data,column,mv_strategy,mv_constant){
+  switch(mv_strategy,
+         "mean"= replace_na_in_col(data,column,apply(data[column],2,mean,na.rm=TRUE)),
+         "median"=replace_na_in_col(data,column,apply(data[column],2,median,na.rm=TRUE)),
+         "most-frequent" = replace_na_in_col(data,column,apply(data[column],2,get_mode)),
+         "constant" = replace_na_in_col(data,column,mv_constant)
+  )
+}
+apply_mv_rule <- function(data,column,mv_method,mv_strategy,mv_constant){
+  switch(mv_method,
+         "NONE" = data,
+         "DELETE_ROW" = data%>%filter(!is.na(data[column])),
+         "NUM_IMPUTATION" = apply_mv_strategy(data,column,mv_strategy,mv_constant),
+         "CAT_IMPUTATION" = apply_mv_strategy(data,column,mv_strategy,mv_constant)
+  )
+}
 preprocessServer <- function(input, output,session){
-  read_data <- reactive({
+  
+  input_data <- reactive({
     req(input$preprocessFile)
-    data<-read_xlsx(input$preprocessFile$datapath)
-    data[,!names(data) %in% irrelevant_cols]
+    read_xlsx(input$preprocessFile$datapath)%>%
+      mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years"))%>%
+      mutate(CourseDuration=time_length(difftime(mdy(substring(BatchEndDate,0,11)),mdy(substring(BatchStartDate,0,11))),"days"))
   })
   
- 
+  read_data <-reactive({
+    data<-input_data()
+    data[,!names(data) %in% input$preprocessIrrelevantCols]
+  })
+  
+  apply_all_transform <- reactive ({
+    data<-read_data()
+    for(col in cols_with_missing_val()){
+      data <- data %>% apply_mv_rule(col,getSelectedMethod(col),
+                                     getSelectedStrategy(col),getSelectedConstant(col))
+    }
+    data
+  })
+  
   
   select_col_data<-reactive({
     read_data() %>% select(input$preprocessColumns)
   });
   
   
-  apply_mv_strategy <- reactive({
-    switch(input$preprocessMVStrategyA,
-           "mean"= replace_na_in_col(read_data(),input$preprocessColumns,apply(select_col_data(),2,mean,na.rm=TRUE)),
-           "median"=replace_na_in_col(read_data(),input$preprocessColumns,apply(select_col_data(),2,median,na.rm=TRUE)),
-           "most-frequent" = replace_na_in_col(read_data(),input$preprocessColumns,apply(select_col_data(),2,get_mode)),
-           "constant" = replace_na_in_col(read_data(),input$preprocessColumns,input$preprocessMVConstantA)
-    )
-  })
-  
-  
   cols_with_missing_val <- reactive({
     names(which(colSums(is.na(read_data()))>0))
   })
-  
-  
     
-  apply_mv_rule <- reactive({
-    switch(input$preprocessMVMethodA,
-           "NONE" = read_data(),
-           "DELETE_ROW" = read_data()%>%filter(!is.na(select_col_data())),
-           "NUM_IMPUTATION" = apply_mv_strategy(),
-           "CAT_IMPUTATION" = apply_mv_strategy()
-    )
-  })
   
   data_after_mv<-reactive({
-    apply_mv_rule()%>%select(input$preprocessColumns)%>%mutate_if(sapply(input$preprocessColumns,isCategorical),as.factor)
+    apply_mv_rule(read_data(),input$preprocessColumns,input$preprocessMVMethodA,
+                  input$preprocessMVStrategyA,input$preprocessMVConstantA)%>%
+      select(input$preprocessColumns)%>%
+      mutate_if(sapply(input$preprocessColumns,isCategorical),as.factor)
   })
   
   
@@ -106,7 +121,12 @@ preprocessServer <- function(input, output,session){
   
   observeEvent(input$preprocessFile,{
       initialize_map(cols_with_missing_val())
-      updateSelectInput(session,"preprocessColumns",choices=cols_with_missing_val())
+      updatePickerInput(session,"preprocessIrrelevantCols",choices=names(input_data()));
+      
+  })
+  
+  observeEvent(input$preprocessIrrelevantCols,{
+    updateSelectInput(session,"preprocessColumns",choices=cols_with_missing_val())
   })
   
   
@@ -128,14 +148,14 @@ preprocessServer <- function(input, output,session){
       req(input$preprocessColumns)
       radioButtons("preprocessMVMethodA", label = "METHOD",
                   choices = getMVMethod(),
-                  selected = getSelectedMethod(input$preprocessColumns))
+                  selected = c(getSelectedMethod(input$preprocessColumns)))
   })
   
   output$preprocessMVStrategy <- renderUI({
     req(input$preprocessMVMethodA)
     radioButtons("preprocessMVStrategyA", label = "STRATEGY",
                 choices = getMVStrategy(),
-                selected = getSelectedStrategy(input$preprocessColumns))
+                selected = c(getSelectedStrategy(input$preprocessColumns)))
   })
   
   output$preprocessMVConstant <- renderUI({
@@ -150,7 +170,17 @@ preprocessServer <- function(input, output,session){
     MV_MAP[paste(input$preprocessColumns,"CONSTANT",sep=".")]=input$preprocessMVConstantA
   })
   
-
+  
+  
+  observeEvent(input$preprocessDownload,{
+    write.xlsx(apply_all_transform(),'data/processed/pre-processed.xlsx');
+    output$preprocessDownloadStatus <- renderText({
+      paste("[",Sys.time(),"] : donloaded file and rules @ [data/processed/]");
+    }
+    )
+  })
+  
+    
   
   observeEvent(input$preprocesView, {
     output$preprocessNumMissingValues<-renderText({ paste("# Missing Values : ", toString(missing_value_rows()))})
