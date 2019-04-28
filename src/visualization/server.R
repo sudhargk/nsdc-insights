@@ -1,6 +1,11 @@
 
-visualServer <- function(input, output,read_data){
+visualServer <- function(input, output){
  
+  read_data <- reactive({
+      read.xlsx('data/processed/pre-processed.xlsx')
+  })
+  
+  
   uniqueCentreStates <- reactive({
     unique(read_data()["CentreState"])
   });
@@ -31,29 +36,24 @@ visualServer <- function(input, output,read_data){
   });
   
   centersSelected <- reactive({
-      read_data() %>%filter(CentreState %in% input$visualCenterStateSelect) %>% 
-      select(CentreType,centre.Status,CentreID,MonthlyCurrentCTCOrearning,PlacementStatus,DateOfBirth) %>%
-      mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years")) %>%
+    read_data() %>%filter(CentreState %in% input$visualCenterStateSelect) %>% 
+      select(CentreType,centre.Status,CentreID,MonthlyCurrentCTCOrearning,PlacementStatus,Age) %>%
       group_by(CentreType,centre.Status,CentreID)%>%
       summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageAge=mean(Age),Placement=(sum(PlacementStatus==2)/sum(!is.na(CentreID))))
   });
   
   candidateSelected <- reactive({
-      read_data() %>% filter(CandidateState %in% input$visualCandidateStateSelect) %>% 
-      select(NewID,Grade,DateOfBirth,EducationLevel,`Employment.Type`,PlacementStatus,FundingPartner,VM1,VM2,TechnicalEducation,MonthlyEarningOrCTCbeforeTraining,
-             MonthlyCurrentCTCOrearning,PreTrainingStatus)%>%
-      mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years"))
-     
+    read_data() %>% filter(CandidateState %in% input$visualCandidateStateSelect) %>% 
+      select(NewID,Grade,Age,EducationLevel,`Employment.Type`,PlacementStatus,FundingPartner,VM1,VM2,TechnicalEducation,
+             MonthlyCurrentCTCOrearning,PreTrainingStatus)
   });
   
   coursesSelected <- reactive({
     read_data() %>% filter(Skilling.Category %in% input$visualCourseSkillSelect) %>% 
-      select(Course.MAster.ID,`Course Fee`,DateOfBirth,PlacementStatus,MonthlyCurrentCTCOrearning,BatchEndDate,BatchStartDate)%>%
-      mutate(Age=time_length(difftime(Sys.Date(),mdy(substring(DateOfBirth,0,11))),"years")) %>%
-      mutate(Duration=time_length(difftime(mdy(substring(BatchEndDate,0,11)),mdy(substring(BatchStartDate,0,11))),"days"))%>%
+      select(Course.MAster.ID,Age,PlacementStatus,MonthlyCurrentCTCOrearning,CourseDuration)%>%
       group_by(Course.MAster.ID)%>%
-      summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),AverageFee=mean(`Course Fee`),
-                AverageDuration=mean(Duration),AverageAge=mean(Age),
+      summarize(AvereageCTC=mean(MonthlyCurrentCTCOrearning),
+                AverageDuration=mean(CourseDuration),AverageAge=mean(Age),
                 Placement=(sum(PlacementStatus==2)/sum(!is.na(Course.MAster.ID))))
   });
   
@@ -243,7 +243,8 @@ visualServer <- function(input, output,read_data){
   output$visualCandidateAge <- renderRbokeh({
     data <- candidateSelected()%>%filter(!is.na(Age))
     figure(xlab = "Age", ylab = "# of Candidates",legend_location=NULL, tools=NULL) %>%
-      ly_hist(Age,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+      ly_hist(Age,data=data%>%filter(PlacementStatus==1),color="sky",alpha = 0.5, freq = TRUE)  %>%
+      ly_hist(Age+0.5,data=data%>%filter(PlacementStatus==2),color="orange",alpha = 0.5, freq = TRUE)  
       #%>% ly_density(Age,data=data) 
   })
   
@@ -272,12 +273,12 @@ visualServer <- function(input, output,read_data){
       #%>% ly_density(AverageDuration,data=data) 
   });
   
-  output$visualCoursesFee <- renderRbokeh({
-    data <- coursesSelected()%>%filter(!is.na(AverageFee))
-    figure(xlab = "Course Fee", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
-      ly_hist(AverageFee,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
-    #%>% ly_density(AverageDuration,data=data) 
-  });
+  # output$visualCoursesFee <- renderRbokeh({
+  #   data <- coursesSelected()%>%filter(!is.na(AverageFee))
+  #   figure(xlab = "Course Fee", ylab = "# of Courses",legend_location=NULL, tools=NULL) %>% 
+  #     ly_hist(AverageFee,data=data,alpha = 0.5, breaks = 20,freq = TRUE)  
+  #   #%>% ly_density(AverageDuration,data=data) 
+  # });
   
   
   output$visualCourseAge <- renderRbokeh({

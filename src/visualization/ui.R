@@ -85,7 +85,7 @@ visualUI  <- tabPanel("Visualization",
                        mainPanel(
                          tabsetPanel(
                            tabPanel("Duration", rbokehOutput("visualCoursesDuration")),
-                           tabPanel("Fee", rbokehOutput("visualCoursesFee")),
+                           #tabPanel("Fee", rbokehOutput("visualCoursesFee")),
                            tabPanel("Age ",rbokehOutput("visualCourseAge")),
                            tabPanel("Placement ",rbokehOutput("visualCoursePlacement")),
                            tabPanel("Package ",rbokehOutput("visualCoursePackage"))
