@@ -19,7 +19,11 @@ preprocessUI  <- tabPanel("Data Preparation", #sidebarPanel(
   wellPanel(
   selectInput(inputId = "preprocessColumns",
               label = "Columns with Missing Values :",
-              choices = c()))), 
+              choices = c())),
+  actionBttn(inputId = "preprocessDownload",label = "Download", 
+             style = "gradient", color = "primary",icon = icon("fas","fa-download")),
+  hr(),
+  textOutput("preprocessDownloadStatus")), 
   mainPanel(
   sidebarLayout(
   sidebarPanel(
@@ -39,11 +43,7 @@ preprocessUI  <- tabPanel("Data Preparation", #sidebarPanel(
         rbokehOutput("preprocessDistribution"),
         textOutput("preprocessNumMissingValues"),
         textOutput("preprocessNumRows")
-      ),
-      actionBttn(inputId = "preprocessDownload",label = "Download", 
-                 style = "gradient", color = "primary",icon = icon("fas","fa-download")),
-      hr(),
-      textOutput("preprocessDownloadStatus")
+      )
   ))
 ))
 

@@ -5,16 +5,16 @@ MV_MAP<-hash()
 
 default_method<-function(type){
   switch(type,
-         "Categorical"="CAT_IMPUTATION",
-         "Numerical"="NUM_IMPUTATION",
-         "Date"="NONE")
+         "Categorical"="Categorical Imputation",
+         "Numerical"="Numeric Imputation",
+         "Date"="None")
 }
 
 default_strategy<-function(type){
   switch(type,
-         "Categorical"="constant",
-         "Numerical"="median",
-         "Date"="median")
+         "Categorical"="Constant",
+         "Numerical"="Median",
+         "Date"="Median")
 }
 
 default_constants<-function(type){
@@ -57,18 +57,18 @@ replace_na_in_col<- function(data,colname,value){
 
 apply_mv_strategy<- function(data,column,mv_strategy,mv_constant){
   switch(mv_strategy,
-         "mean"= replace_na_in_col(data,column,apply(data[column],2,mean,na.rm=TRUE)),
-         "median"=replace_na_in_col(data,column,apply(data[column],2,median,na.rm=TRUE)),
-         "most-frequent" = replace_na_in_col(data,column,apply(data[column],2,get_mode)),
-         "constant" = replace_na_in_col(data,column,mv_constant)
+         "Mean"= replace_na_in_col(data,column,apply(data[column],2,mean,na.rm=TRUE)),
+         "Median"=replace_na_in_col(data,column,apply(data[column],2,median,na.rm=TRUE)),
+         "Most-Frequent" = replace_na_in_col(data,column,apply(data[column],2,get_mode)),
+         "Constant" = replace_na_in_col(data,column,mv_constant)
   )
 }
 apply_mv_rule <- function(data,column,mv_method,mv_strategy,mv_constant){
   switch(mv_method,
-         "NONE" = data,
-         "DELETE_ROW" = data%>%filter(!is.na(data[column])),
-         "NUM_IMPUTATION" = apply_mv_strategy(data,column,mv_strategy,mv_constant),
-         "CAT_IMPUTATION" = apply_mv_strategy(data,column,mv_strategy,mv_constant)
+         "None" = data,
+         "Delete Row" = data%>%filter(!is.na(data[column])),
+         "Numeric Imputation" = apply_mv_strategy(data,column,mv_strategy,mv_constant),
+         "Categorical Imputation" = apply_mv_strategy(data,column,mv_strategy,mv_constant)
   )
 }
 preprocessServer <- function(input, output,session){
@@ -132,16 +132,16 @@ preprocessServer <- function(input, output,session){
   
   getMVMethod <- reactive({
     switch(getColumnType(input$preprocessColumns),
-           "Numerical"=c("NONE","DELETE_ROW","NUM_IMPUTATION"),
-           "Categorical"=c("NONE","DELETE_ROW","CAT_IMPUTATION")
+           "Numerical"=c("None","Delete Row","Numeric Imputation"),
+           "Categorical"=c("None","Delete Row","Categorical Imputation")
     ) })
   
   getMVStrategy <- reactive( {
     switch(input$preprocessMVMethodA,
-           "NONE"=c("--------"),
-           "DELETE_ROW"=c("--------"),
-           "NUM_IMPUTATION"=c("mean","median","constant"),
-           "CAT_IMPUTATION"=c("most-frequent","constant")
+           "None"=c("--------"),
+           "Delete Row"=c("--------"),
+           "Numeric Imputation"=c("Mean","Median","Constant"),
+           "Categorical Imputation"=c("Most-Frequent","Constant")
     )})
   
   output$preprocessMVMethod <- renderUI({
@@ -186,12 +186,12 @@ preprocessServer <- function(input, output,session){
     output$preprocessNumMissingValues<-renderText({ paste("# Missing Values : ", toString(missing_value_rows()))})
     output$preprocessNumRows<-renderText({ paste("# Total Rows",toString(data_after_mv()%>%count()))})
      output$preprocessDistribution<-renderRbokeh({
-       myPlot <- figure(xlab = input$preprocessColumns , ylab = "Frequency",legend_location=NULL, tools=NULL);
+       myPlot <- figure(width=800,height=700,xlab = input$preprocessColumns , ylab = "Frequency",legend_location=NULL);
        if(!isCategorical(input$preprocessColumns)){
-          myPlot%>%ly_hist(input$preprocessColumns,data=data_after_mv(),alpha = 0.5, breaks = 20,freq = TRUE)
+          myPlot%>%ly_hist(input$preprocessColumns,data=data_after_mv(),alpha = 0.5, breaks = 20,freq = TRUE,hover=TRUE)
        }else{
           gData<-table(data_after_mv())
-          myPlot%>%ly_bar(x=names(gData),y=gData,alpha = 0.5)
+          myPlot%>%ly_bar(x=names(gData),y=gData,alpha = 0.5,hover = TRUE)
        }
     })
     
