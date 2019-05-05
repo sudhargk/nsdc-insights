@@ -1,4 +1,4 @@
-irrelevant_cols <- c("NewID","Account.ID","batchID","CentreID","Course.MAster.ID","StateOFPlacementorWork","CentreState","CentreDistrict","BatchEndDate","BatchStartDate","DateOfBirth","MonthlyCurrentCTCOrearning")
+irrelevant_cols <- c("NewID","Account.ID","batchID","CentreID","Course.MAster.ID","StateOFPlacementorWork","CentreState","CentreDistrict","BatchEndDate","BatchStartDate","DateOfBirth","MonthlyCurrentCTCOrearning","Employment.Type")
 
 getColumnType <- function(column){
   switch(column,
@@ -38,9 +38,15 @@ getColumnType <- function(column){
          "CourseDuration"="Numerical"
   )
 }
-  isCategorical<-function(colname){
-    getColumnType(colname)=="Categorical"
-  }
+preferedColumns <- function(){
+  c("Type.of.partner","VM1","Gender","VM2","PreTrainingStatus",
+    "EducationLevel","TechnicalEducation","CandidateState",
+    "FundingPartner","Grade","Skilling.Category",
+    "CentreState","CentreType","centre.Status","Age","CourseDuration")
+}
+isCategorical<-function(colname){
+  getColumnType(colname)=="Categorical"
+}
   
   toType <- function(column,value){
     if(column=="Grade"){
