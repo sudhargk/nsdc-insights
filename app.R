@@ -14,8 +14,11 @@ library(tidyr)
 
 
 ##modeling
-library(rpart)
-library(rattle)
+library(superml)
+library(ranger)
+library(xgboost)
+
+
 
 source('src/ui.R')
 source('src/server.R')
