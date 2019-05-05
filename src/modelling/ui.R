@@ -1,4 +1,4 @@
-modelUI  <- tabPanel("Model", 
+modelUI  <- tabPanel("Advanced Model", 
   tags$style(HTML("
           .box  {background-color : transparent; }
       ")
@@ -10,30 +10,40 @@ modelUI  <- tabPanel("Model",
   ),
   wellPanel(
     h3("Modelling"),
-    checkboxGroupButtons(
-      inputId = "modelOptions", label = "Models ",
-      choices = c("Random Forest", "XGBoost","SVM"),direction = "vertical",
-      selected = c("Random Forest", "XGBoost")),
     knobInput(inputId = "modelfolds",
-              label = "# Folds", value = 10, min = 1, max = 20,  displayPrevious = TRUE, lineCap = "round",
+              label = "# Folds", value = 5, min = 1, max = 10,  displayPrevious = TRUE, lineCap = "round",
               fgColor = "#428BCA",inputColor = "#428BCA",width=100,height = 100),
     uiOutput("modelParameters"),
     pickerInput("modelScorers", "Scoring",choices = c("auc","accuracy","mse","rmse","logloss","mae","f1","precision","recall"),
                 options = list(`actions-box` = TRUE), multiple = TRUE,selected = c("accuracy","auc")),
-    actionBttn("modelTrain", label = "Train",  style = "bordered", 
-              color = "warning",icon = icon("sliders"))
+    actionBttn("modelTrainRandomForest", label = "Train Random Forest",  style = "bordered", 
+              color = "warning",icon = icon("sliders")),
+    actionBttn("modelTrainXGBoost", label = "Train XG Boost",  style = "bordered", 
+               color = "warning",icon = icon("sliders"))
   )
 ), mainPanel(
   tabsetPanel(
     tabPanel("Results",
-             tableOutput("modelResults")
+             fluidRow(
+                  tableOutput("modelResultsRandomForest"),
+                  tableOutput("modelResultsXGBoost")
+             )
              ),
     tabPanel("Plots", 
-             plotOutput("modelPlots")
+             fluidRow(
+                  plotOutput("modelPlotRandomForest"),
+                  plotOutput("modelPlotXGBoost")
+             )
              ),
     tabPanel("Accuracy", 
-             uiOutput("modelAccuracy")
+             fluidRow(
+                h3("Random Forest"),
+                tableOutput("modelAccuracyRandomForest"),
+                br(),
+                h3("XGBoost"),
+                tableOutput("modelAccuracyXGBoost")
              )
+        )
     )
     
   )

@@ -1,8 +1,7 @@
 source("src/overview/ui.R")
-#source("src/data/ui.R")
 source("src/visualization/ui.R")
+source("src/simple-modelling/ui.R")
 source("src/modelling/ui.R")
-source("src/testing/ui.R")
 source("src/conclusion/ui.R")
 source("src/pre-processing/ui.R")
 
@@ -16,10 +15,9 @@ ui <- navbarPage(
   #title =  tags$img(src='icon.png'),
   windowTitle="National Skills Development Corporation",
   overviewUI,
-  #dataUI,
   preprocessUI,
   visualUI,
+  simpleModelUI,
   modelUI,
-  testUI,
   conclusionUI
 )
