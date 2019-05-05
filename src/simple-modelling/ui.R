@@ -2,7 +2,7 @@ simpleModelUI  <- tabPanel("Model",
   mainPanel(
   tabsetPanel(
     tabPanel("Tree ",
-               plotOutput("simpleModelTree")
+             imageOutput("simpleModelTree")
              ),
     tabPanel("Feature Importance",
               rbokehOutput("simpleModelFeatImp")

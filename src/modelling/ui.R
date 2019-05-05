@@ -43,7 +43,16 @@ modelUI  <- tabPanel("Advanced Model",
                 h3("XGBoost"),
                 tableOutput("modelAccuracyXGBoost")
              )
-        )
+        ),
+    tabPanel("Feature Importance", 
+             fluidRow(
+               h3("Random Forest"),
+               rbokehOutput("modelFeatRandomForest"),
+               br(),
+               h3("XGBoost"),
+               rbokehOutput("modelFeatXGBoost")
+             )
+    )
     )
     
   )

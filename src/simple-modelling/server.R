@@ -37,6 +37,7 @@ prepareTree <- function(tree){
                height="0.75", width="1")
 
   SetGraphStyle(tree, rankdir = "LR", dpi=70.)
+  print(plot(tree))
 }
 
 
@@ -69,6 +70,7 @@ buildSimpleModel <- function(modelName,split,session){
   modelTree<-h2o.getModelTree(model=bestModel,tree_number = 1)
   tree = createDataTree(modelTree)
   prepareTree(tree)
+  
   list(tree=tree,featImp=varimp,roc=roc,conf=testScore@metrics$cm$table,
        scores=testScore@metrics$max_criteria_and_metric_scores)
 }
@@ -95,9 +97,15 @@ simpleModelServer <- function(input, output,session){
       
     })
     
-    output$simpleModelTree<- renderPlot({
-      plot(result$tree)
-    })
+    
+    output$simpleModelTree<- renderImage(
+      {
+        
+        filename <- normalizePath(file.path('output',
+                                            paste('simpleModelTree','.png',sep="")))
+        list(src = filename)
+      }, deleteFile = FALSE
+     )
     
     output$simpleModelROC<- renderPlot({result$roc})
     

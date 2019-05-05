@@ -11,18 +11,20 @@ library(rbokeh)
 library(lubridate)
 library(hash)
 library(tidyr)
-
+library(rjson)
 
 ##modeling
 library(h2o)
 # library(superml)
 # library(ranger)
 # library(xgboost)
-
+library(data.tree)
 
 
 source('src/ui.R')
 source('src/server.R')
+
+
 
 shinyApp(
 ui = ui,

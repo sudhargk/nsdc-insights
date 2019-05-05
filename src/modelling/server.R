@@ -81,12 +81,13 @@ buildModel <- function(modelName,split,session,modelfolds){
   
   bestModel<-getBestModel(modelGrid,"accuracy")
   testScore<-h2o.performance(bestModel$model,split[[2]])
+  varimp<-h2o.varimp(bestModel$model)%>%arrange(desc(scaled_importance))
   
   modelScore<-updateModelScore(modelName,testScore,bestModel$summary)
   
   fig<-updatePlot(modelName,testScore)
   
-  list(model=modelScore,plot=fig,confusion=testScore@metrics$cm$table)
+  list(model=modelScore,feat=varimp,plot=fig,confusion=testScore@metrics$cm$table)
 }
 
 modelServer <- function(input, output,session){
@@ -111,6 +112,12 @@ modelServer <- function(input, output,session){
     output$modelResultsRandomForest <- renderTable(result$model)
     output$modelPlotRandomForest <- renderPlot({result$plot})
     output$modelAccuracyRandomForest <- renderTable(result$confusion)
+    output$modelFeatRandomForest <- renderRbokeh({
+      figure(xlab = "Variable Imporatnce", ylab = "Features",legend_location=NULL, tools=NULL) %>% 
+        ly_bar(x=scaled_importance,y=variable,data = head(result$feat,10),
+               alpha = 0.5,hover=FALSE,width = 0.9)
+      
+    })
   })
   
   observeEvent(input$modelTrainXGBoost,{
@@ -118,5 +125,11 @@ modelServer <- function(input, output,session){
     output$modelResultsXGBoost <- renderTable(result$model)
     output$modelPlotXGBoost <- renderPlot({result$plot})
     output$modelAccuracyXGBoost <- renderTable(result$confusion)
+    output$modelFeatXGBoost <- renderRbokeh({
+      figure(xlab = "Variable Imporatnce", ylab = "Features",legend_location=NULL, tools=NULL) %>% 
+        ly_bar(x=scaled_importance,y=variable,data = head(result$feat,10),
+               alpha = 0.5,hover=FALSE,width = 0.9)
+      
+    })
   })
 }
