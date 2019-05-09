@@ -1,4 +1,4 @@
-irrelevant_cols <- c("NewID","Account.ID","batchID","CentreID","Course.MAster.ID","StateOFPlacementorWork","CentreState","CentreDistrict","BatchEndDate","BatchStartDate","DateOfBirth","MonthlyCurrentCTCOrearning","Employment.Type")
+irrelevant_cols <- c("NewID","Account.ID","batchID","CentreID","Course.MAster.ID","StateOFPlacementorWork","CentreState","CentreDistrict","BatchEndDate","BatchStartDate","DateOfBirth","MonthlyCurrentCTCOrearning","Employment.Type","Course Fee")
 
 getColumnType <- function(column){
   switch(column,
